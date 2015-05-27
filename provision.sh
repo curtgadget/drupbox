@@ -45,6 +45,7 @@ php5-xdebug
 php5-mysql
 php5-curl
 php-pear
+php5-gd
 memcached
 vim
 git
