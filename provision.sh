@@ -30,7 +30,7 @@ echo "         Begin Provisioning"
 echo "============================================="
 
 log_msg "Preparing boot log file..."
-log_status rm $BOOTLOG 
+log_status rm $BOOTLOG
 
 APT_PACKAGES=(
 curl
@@ -45,28 +45,27 @@ php5-xdebug
 php5-mysql
 php5-curl
 php-pear
-php5-gd
 memcached
 vim
 git
 unzip
+ntp
+openssh-server
+phpmyadmin
 screen
 nodejs
 )
 
-
 # update apt repo
 log_msg "updating apt repo..."
-
 update_apt_repo(){
     apt-get update
-    apt-get -f -y install
     apt-get -y install python-software-properties
-    export DEBIAN_FRONTEND=noninteractive
-    add-apt-repository ppa:chris-lea/node.js 
+     export DEBIAN_FRONTEND=noninteractive
+    add-apt-repository ppa:ondrej/php5-5.6
+    add-apt-repository ppa:chris-lea/node.js
     add-apt-repository ppa:chris-lea/node.js-devel
     apt-get update
-    apt-get -f -y install
 }
 log_status update_apt_repo
 
@@ -86,6 +85,13 @@ install_composer(){
 }
 log_status install_composer
 
+log_msg "Setting up phpmyadmin"
+setup_phpmyadmin(){
+   sudo cp /etc/phpmyadmin/apache.conf /etc/apache2/conf-available/phpmyadmin.conf
+   a2enconf phpmyadmin
+}
+log_status setup_phpmyadmin
+
 # install drush
 log_msg "Installing drush..."
 install_drush(){
@@ -95,6 +101,24 @@ install_drush(){
 }
 log_status install_drush
 
+log_msg "Adding .bash_profile"
+setup_bash_profile(){
+    cp -f /vagrant/bash_profile /home/vagrant/.bash_profile
+    source /home/vagrant/.bash_profile
+}
+log_status setup_bash_profile
+
+log_msg "Apache Setup..."
+setup_apache(){
+    echo "DirectoryIndex index.php" > /var/www/html/.htaccess
+
+    # Clean URLS.
+    a2enmod rewrite
+    sudo cp /vagrant/clean_urls.conf /etc/apache2/conf-available/
+    a2enconf clean_urls
+}
+log_status setup_apache
+
 log_msg "restarting services.."
 restart_services(){
     service mysql restart
@@ -103,5 +127,3 @@ restart_services(){
 log_status restart_services
 
 echo "Provisioning complete"
-
-
